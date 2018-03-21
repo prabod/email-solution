@@ -1,0 +1,33 @@
+version: '2'
+
+services:
+    nginx:
+        image: jwilder/nginx-proxy
+    mariadb:
+        image: mariadb:10.2
+        container_name: mariadb
+        restart: unless-stopped
+        environment:
+          - MYSQL_DATABASE=postfix
+          - MYSQL_USER=${DBUSER}
+          - MYSQL_PASSWORD=${DBPASS}
+        volumes:
+          - ./database/data:/var/lib/mysql
+    redis:
+        image: redis:4.0-alpine
+        container_name: redis
+        restart: unless-stopped
+        command: redis-server --appendonly yes
+        volumes:
+          - ./redis/data:/data
+
+    emailserver:
+        build:
+            context: .
+            dockerfile: ./emailserver/Dockerfile
+        volumes:
+          - ./emailserver/certs:/certs
+    postfixadmin:
+        build:
+            context: .
+            dockerfile: ./postfixadmin/Dockerfile

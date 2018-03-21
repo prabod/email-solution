@@ -1,0 +1,6 @@
+# mysql_virtual_mailbox_limit_maps.cf
+user = postfixuser
+password = postfixpassword
+hosts = 127.0.0.1
+dbname = postfix
+query = SELECT quota FROM mailbox WHERE username='%s' AND active = '1'

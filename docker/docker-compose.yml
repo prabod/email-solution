@@ -1,0 +1,106 @@
+version: '2'
+networks:
+        reverse-proxy:
+            external:
+              name: reverse-proxy
+        back:
+            driver: bridge
+services:
+    nginx:
+        extends:
+            file: docker-common.yml
+            service: nginx
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - /var/run/docker.sock:/tmp/docker.sock:ro
+            - ./emailserver/certs:/etc/nginx/certs
+        volumes_from:
+            - emailserver
+        networks:
+            - reverse-proxy
+            - back
+    mariadb:
+        extends:
+            file: docker-common.yml
+            service: mariadb
+        environment:
+            - MYSQL_RANDOM_ROOT_PASSWORD=yes
+            - MYSQL_DATABASE=postfix
+            - MYSQL_USER=${DBUSER}
+            - MYSQL_PASSWORD=${DBPASS}
+            - HOSTNAME=${DBHOST}
+            - VIRTUAL_HOST=mariadb
+        expose:
+            - 3306
+        volumes:
+            - ./docker/postgres/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+        networks:
+            - back
+
+    emailserver:
+        extends:
+            file: docker-common.yml
+            service: emailserver
+        environment:
+            - VIRTUAL_HOST=${FQDN}
+            - VIRTUAL_PORT=80
+            - HOSTNAME=${FQDN}
+            - DOMAIN=${DOMAIN}
+            - EMAIL=${EMAIL}
+            - DBUSER=${DBUSER}
+            - DBPASS=${DBPASS}
+        ports:
+            - "80"
+            - "25:25"       # SMTP                - Required
+            - "110:110"     # POP3
+            - "143:143"     # IMAP
+            - "465:465"     # SMTPS
+            - "587:587"     # Submission
+            - "993:993"     # IMAPS
+            - "995:995"     # POP3S
+            - "4190:4190"   # SIEVE
+        entrypoint:
+            - /bin/init_sys.sh
+        depends_on:
+            - mariadb
+            - redis
+        networks:
+            - reverse-proxy
+            - back
+
+    postfixadmin:
+        extends:
+            file: docker-common.yml
+            service: postfixadmin
+        environment:
+            - VIRTUAL_HOST=postfixadmin.${DOMAIN}
+            - VIRTUAL_PROTO=https
+            - VIRTUAL_PORT=8080
+            - HOSTNAME=postfixadmin.${DOMAIN}
+            - DOMAIN=${DOMAIN}
+            - EMAIL=${EMAIL}
+            - DBUSER=${DBUSER}
+            - DBPASS=${DBPASS}
+        entrypoint:
+            - /bin/init_sys.sh
+        ports:
+            - "8080"
+        depends_on:
+            - mariadb
+            - emailserver
+        networks:
+            - reverse-proxy
+            - back
+    redis:
+        extends:
+            file: docker-common.yml
+            service: redis
+        environment:
+            - VIRTUAL_HOST=redis
+        expose:
+            - "6379"
+        networks:
+            - back
+    

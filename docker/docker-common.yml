@@ -25,9 +25,13 @@ services:
         build:
             context: .
             dockerfile: ./emailserver/Dockerfile
+        hostname: ${FQDN}
         volumes:
           - ./emailserver/certs:/certs
+          - ./emailserver/ssl:/etc/letsencrypt/
+          - ./mail:/var/mail
     postfixadmin:
         build:
             context: .
             dockerfile: ./postfixadmin/Dockerfile
+        hostname: postfixadmin.${DOMAIN}

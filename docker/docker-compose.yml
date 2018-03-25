@@ -15,12 +15,13 @@ services:
             - "443:443"
         volumes:
             - /var/run/docker.sock:/tmp/docker.sock:ro
-            - ./emailserver/certs:/etc/nginx/certs
+            - ./emailserver/ssl/archive/${FQDN}:/etc/nginx/certs:ro
         volumes_from:
             - emailserver
         networks:
             - reverse-proxy
             - back
+        container_name: "nginx"
     mariadb:
         extends:
             file: docker-common.yml
@@ -33,18 +34,19 @@ services:
             - HOSTNAME=${DBHOST}
             - VIRTUAL_HOST=mariadb
         expose:
-            - 3306
+            - "3306"
         volumes:
             - ./docker/postgres/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
         networks:
             - back
+        container_name: "mariadb"
 
     emailserver:
         extends:
             file: docker-common.yml
             service: emailserver
         environment:
-            - VIRTUAL_HOST=${FQDN}
+            - VIRTUAL_HOST=${FQDN},rspamd.${DOMAIN}
             - VIRTUAL_PORT=80
             - HOSTNAME=${FQDN}
             - DOMAIN=${DOMAIN}
@@ -53,6 +55,7 @@ services:
             - DBPASS=${DBPASS}
         ports:
             - "80"
+            - "11334:11334"
             - "25:25"       # SMTP                - Required
             - "110:110"     # POP3
             - "143:143"     # IMAP
@@ -69,6 +72,7 @@ services:
         networks:
             - reverse-proxy
             - back
+        container_name: "emailserver"
 
     postfixadmin:
         extends:
@@ -76,7 +80,6 @@ services:
             service: postfixadmin
         environment:
             - VIRTUAL_HOST=postfixadmin.${DOMAIN}
-            - VIRTUAL_PROTO=https
             - VIRTUAL_PORT=8080
             - HOSTNAME=postfixadmin.${DOMAIN}
             - DOMAIN=${DOMAIN}
@@ -93,6 +96,8 @@ services:
         networks:
             - reverse-proxy
             - back
+        container_name: "postfixadmin"
+
     redis:
         extends:
             file: docker-common.yml
@@ -103,4 +108,5 @@ services:
             - "6379"
         networks:
             - back
+        container_name: "redis"
     

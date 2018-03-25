@@ -1,2 +1,2 @@
-bind_socket = "localhost:11333";
+bind_socket = "*:11333";
 # count = 1

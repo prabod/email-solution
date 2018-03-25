@@ -4,21 +4,26 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get -y purge exim4*
 RUN apt-get -y install letsencrypt
 RUN apt-get -y install postfix postfix-mysql
-RUN apt-get -y install dovecot-core dovecot-imapd dovecot-pop3d dovecot-lmtpd dovecot-mysql dovecot-sieve
+RUN apt-get install -y rsyslog
+RUN apt-get -y install dovecot-core dovecot-imapd dovecot-pop3d dovecot-lmtpd dovecot-mysql dovecot-sieve dnsutils
 
 RUN apt-get -y install gnupg python-gpgme sudo
-RUN adduser --system --no-create-home --disabled-login zeyple
+RUN adduser --system --no-create-home --group --home /etc/zeyple --disabled-login zeyple
 RUN mkdir -p /etc/zeyple/keys && chmod 700 /etc/zeyple/keys && chown zeyple: /etc/zeyple/keys
 ADD https://raw.github.com/infertux/zeyple/master/zeyple/zeyple.py /usr/local/bin/zeyple.py
 RUN chmod 744 /usr/local/bin/zeyple.py && chown zeyple: /usr/local/bin/zeyple.py
-ADD https://raw.github.com/infertux/zeyple/master/zeyple/zeyple.conf.example /etc/zeyple/zeyple.conf
+ADD https://raw.github.com/infertux/zeyple/master/zeyple/zeyple.conf.example /etc/zeyple.conf
 RUN touch /var/log/zeyple.log && chown zeyple: /var/log/zeyple.log
+RUN chown -R zeyple /etc/zeyple /usr/local/bin/zeyple.py
+
 
 COPY ./emailserver/configs/Postfix /etc/postfix/
 COPY ./emailserver/configs/Dovecot /etc/dovecot/
 RUN groupadd -g 5000 vmail && useradd -g vmail -u 5000 vmail -d /var/mail
 RUN chown -R vmail:vmail /var/mail
+RUN chown -R postfix /etc/postfix
 RUN chmod -R o-rwx /etc/postfix
+RUN chmod -R 755 /etc/postfix
 RUN chown -R vmail:dovecot /etc/dovecot
 RUN chmod -R o-rwx /etc/dovecot
 

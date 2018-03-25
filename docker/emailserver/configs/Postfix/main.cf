@@ -1,5 +1,4 @@
-
-smtpd_banner = $hostname ESMTP $mail_name (Ubuntu)
+smtpd_banner = $myhostname ESMTP $mail_name (Ubuntu)
 biff = no
 
 # appending .domain is the MUA's job.
@@ -33,8 +32,7 @@ smtpd_recipient_restrictions =
 myhostname = %DFQN%
 alias_maps = hash:/etc/aliases
 alias_database = hash:/etc/aliases
-#myorigin = /etc/mailname
-#mydestination = example.com, hostname.example.com, localhost.example.com, localhost
+myorigin = %DOMAIN%
 mydestination = localhost
 relayhost =
 mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128
@@ -56,11 +54,20 @@ virtual_mailbox_maps =
    proxy:mysql:/etc/postfix/sql/mysql_virtual_mailbox_maps.cf,
    proxy:mysql:/etc/postfix/sql/mysql_virtual_alias_domain_mailbox_maps.cf
 
-   virtual_create_maildirsize = yes
-   virtual_mailbox_extended = yes
-   virtual_mailbox_limit_maps = mysql:/etc/postfix/sql/mysql_virtual_mailbox_limit_maps.cf
-   virtual_mailbox_limit_override = yes
-   virtual_maildir_limit_message = Sorry, the user's maildir has overdrawn his diskspace quota, please try again later.
-   virtual_overquota_bounce = yes
-
 content_filter = zeyple
+compatibility_level = 2
+virtual_create_maildirsize = yes
+virtual_maildir_extended = yes
+virtual_mailbox_limit_maps = mysql:/etc/postfix/sql/mysql_virtual_mailbox_limit_maps.cf
+virtual_mailbox_limit_override = yes
+virtual_maildir_limit_message = Sorry, the user's maildir has overdrawn his diskspace quota, please try again later.
+virtual_overquota_bounce = yes
+dovecot_destination_recipient_limit = 1
+
+
+# Milter setup
+smtpd_milters = inet:localhost:11332
+non_smtpd_milters=inet:127.0.0.1:11332
+milter_mail_macros="i {mail_addr} {client_addr} {client_name} {auth_authen}"
+milter_default_action = accept
+milter_protocol = 6

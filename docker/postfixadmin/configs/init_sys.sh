@@ -14,6 +14,6 @@ cat > /postfixadmin/config.local.php <<EOF
 \$CONF['database_name'] = 'postfix';
 ?>
 EOF
-
-service start nginx
-cat
+service php7.0-fpm start
+service nginx start
+tail -f /dev/null

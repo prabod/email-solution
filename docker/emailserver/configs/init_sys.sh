@@ -48,24 +48,31 @@ echo $HOSTNAME $DOMAIN $EMAIL
 
 mkdir -p /var/mail/vhosts/$DOMAIN
 
-
+chown -R vmail /var/mail
 #SSL CONFIGURATION
-
-export KEY_PATH=/etc/letsencrypt/live/"$FQDN"
+chmod -R 755 /etc/letsencrypt/
+export KEY_PATH=/etc/letsencrypt/live/"$HOSTNAME"/
+files=$(shopt -s nullglob dotglob; echo $KEY_PATH)
+echo $KEY_PATH
 echo "Checking for existing certificates"
 
-if [ ! -f "$KEY_PATH/fullchain.pem" ]; then
+if (( ${#files} )); then
+    echo "Found existing keys!!"
+else
     echo "No Certicates Found!!"
     echo "Generating SSL Certificates with LetsEncrypt"
     letsencrypt certonly --standalone -d $HOSTNAME --noninteractive --agree-tos --email $EMAIL
-    if [ ! -f "$KEY_PATH/fullchain.pem" ]; then
-      echo "Certicate generation failed."
-    else
+    if (( ${#files} )); then
       echo "Certicate generation Successfull"
+    else
+      echo "Certicate generation failed."
+      exit 1
     fi
 fi
- cp -R ${KEY_PATH} /cert
+
+ cp -R /etc/letsencrypt/ /cert
  sed -i.bak -e "s;%DFQN%;"${HOSTNAME}";g" "/etc/postfix/main.cf"
+ sed -i.bak -e "s;%DOMAIN%;"${DOMAIN}";g" "/etc/postfix/main.cf"
  sed -i.bak -e "s;%DFQN%;"${HOSTNAME}";g" "/etc/dovecot/conf.d/10-ssl.conf"
 
  find /etc/postfix/sql/ -name "mysql_virtual*" -exec sed -i -e "s;postfixuser;"${DBUSER}";g" {} \;
@@ -74,14 +81,29 @@ fi
  sed -i -e "s;redis;"${REDIS_HOST}";g" "/etc/rspamd/local.d/redis.conf"
  sed -i -e "s;redis;"${REDIS_HOST}";g" "/etc/rspamd/local.d/redis.conf"
 
- sed -i -e "s;mailuser;"${DBUSER}";g" "/etc/dovecot/dovecot-sql.conf.ext"
- sed -i -e "s;mailuserpass;"${DBPASS}";g" "/etc/dovecot/dovecot-sql.conf.ext"
- sed -i -e "s;127.0.0.1;"${DBHOST}";g" "/etc/dovecot/dovecot-sql.conf.ext"
+ sed -i -e "s;postfixuser;"${DBUSER}";g" "/etc/dovecot/dovecot-sql.conf"
+ sed -i -e "s;postfixpassword;"${DBPASS}";g" "/etc/dovecot/dovecot-sql.conf"
+ sed -i -e "s;127.0.0.1;"${DBHOST}";g" "/etc/dovecot/dovecot-sql.conf"
 
  PASSWORD=$(rspamadm pw --quiet --encrypt --type pbkdf2 --password "${RSPAMD_PASSWORD}")
  sed -i "s;pwrd;"${PASSWORD}";g" "/etc/rspamd/local.d/worker-controller.inc"
+ cat /var/lib/rspamd/dkim/2018.txt
+ touch /var/log/mail.log
+ touch /var/log/mail.err
+ chown root:root /etc/postfix/dynamicmaps.cf
+ sudo chown root:root /etc/postfix/main.cf
+ sudo chmod 0644 /etc/postfix/main.cf
+ chgrp postfix /etc/postfix/sql/mysql_virtual_*.cf
+ chmod u=rw,g=r,o= /etc/postfix/sql/mysql_virtual_*.cf
+ sudo chmod a+w /var/log/mail*
+ sudo chown zeyple /etc/zeyple.conf
+ touch /etc/postfix/virtual
+ touch /etc/postfix/access
+ postmap hash:/etc/postfix/virtual
+ postmap hash:/etc/postfix/access
 
- service postfix restart
+ service rsyslog start
+ service postfix start
  service dovecot restart
- systemctl start rspamd
- cat
+ service rspamd start
+ tail -f /dev/null

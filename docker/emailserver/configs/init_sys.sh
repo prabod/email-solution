@@ -73,6 +73,8 @@ fi
  cp -R /etc/letsencrypt/ /cert
  sed -i.bak -e "s;%DFQN%;"${HOSTNAME}";g" "/etc/postfix/main.cf"
  sed -i.bak -e "s;%DOMAIN%;"${DOMAIN}";g" "/etc/postfix/main.cf"
+ sed -i.bak -e "s;%DOMAIN%;"${DOMAIN}";g" "/etc/dovecot/conf.d/15-lda.conf"
+ sed -i.bak -e "s;%DOMAIN%;"${DOMAIN}";g" "/etc/dovecot/conf.d/20-lmtp.conf"
  sed -i.bak -e "s;%DFQN%;"${HOSTNAME}";g" "/etc/dovecot/conf.d/10-ssl.conf"
 
  find /etc/postfix/sql/ -name "mysql_virtual*" -exec sed -i -e "s;postfixuser;"${DBUSER}";g" {} \;
@@ -87,6 +89,14 @@ fi
 
  PASSWORD=$(rspamadm pw --quiet --encrypt --type pbkdf2 --password "${RSPAMD_PASSWORD}")
  sed -i "s;pwrd;"${PASSWORD}";g" "/etc/rspamd/local.d/worker-controller.inc"
+ 
+ groupadd -g 5000 vmail && useradd -g vmail -u 5000 vmail -d /var/mail
+ chown -R vmail:vmail /var/mail
+ mkdir -p /var/mail/sieve/global
+ cp -R /sieve/* /var/mail/sieve/global/
+ sievec /var/mail/sieve/global/spam-global.sieve
+ sievec /var/mail/sieve/global/report-ham.sieve
+ sudo chown -R vmail: /var/mail/sieve/
  cat /var/lib/rspamd/dkim/2018.txt
  touch /var/log/mail.log
  touch /var/log/mail.err

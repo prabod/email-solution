@@ -83,6 +83,7 @@ services:
             - VIRTUAL_PORT=8080
             - HOSTNAME=postfixadmin.${DOMAIN}
             - DOMAIN=${DOMAIN}
+            - FQDN=${FQDN}
             - EMAIL=${EMAIL}
             - DBUSER=${DBUSER}
             - DBPASS=${DBPASS}

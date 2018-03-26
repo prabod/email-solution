@@ -114,32 +114,33 @@ $ docker-compose up -d
 ## Access Services
 
 1. PostfixAdmin to manage Domains and Mailboxes
-  - Direct your web browser to postfixadmin.domain.tld/setup.php
-  - Enter a Setup Password
-  - Append the generated hash to the config file
-  ```
-  $ docker exec -it postfixadmin /bin/setup_password.sh
-  ```
-  - Add Admin account
-  - Add Domains and Mailboxes
+
+    - Direct your web browser to postfixadmin.domain.tld/setup.php
+    - Enter a Setup Password
+    - Append the generated hash to the config file
+    - ```$ docker exec -it postfixadmin /bin/setup_password.sh```
+    - Add Admin account
+    - Add Domains and Mailboxes
   
 2. Access Webmail
-  - Direct your web browser to webmail.domain.tld/?admin 
-  - Default login is "admin", password is "12345"
-  - Setup IMAP and SMTP accounts
+
+    - Direct your web browser to webmail.domain.tld/?admin 
+    - Default login is "admin", password is "12345"
+    - Setup IMAP and SMTP accounts
   
 3. Access Rspamd WebUI
-  - Direct your web browser to mail.domain.tld:11334
-  - Login using the password mentioned in the .env file
+
+    - Direct your web browser to mail.domain.tld:11334
+    - Login using the password mentioned in the .env file
   
 4. Setup Desktop / Mobile Clients
-  - IMAP Server : imap.domain.tld
-  - IMAP Port : 993
-  - SMTP Server : smtp.domain.tld
-  - SMTP Port : 465
-  - Encryption : SSL/TLS
-  - Username : user@domain.tld
-  - To support signing and encryption install 
-    - [openkeychain](https://play.google.com/store/apps/details?id=org.sufficientlysecure.keychain&hl=en) alongside with K9 on Android. 
-    - [Enigmail Plugin](https://addons.mozilla.org/en-US/thunderbird/addon/enigmail/) for Thunderbird
-    - [Encryptomatic Plugin](https://www.encryptomatic.com/openpgp/) for Outlook
+    - IMAP Server : imap.domain.tld
+    - IMAP Port : 993
+    - SMTP Server : smtp.domain.tld
+    - SMTP Port : 465
+    - Encryption : SSL/TLS
+    - Username : user@domain.tld
+    - To support signing and encryption install 
+      - [openkeychain](https://play.google.com/store/apps/details?id=org.sufficientlysecure.keychain&hl=en) alongside with K9 on Android. 
+      - [Enigmail Plugin](https://addons.mozilla.org/en-US/thunderbird/addon/enigmail/) for Thunderbird
+      - [Encryptomatic Plugin](https://www.encryptomatic.com/openpgp/) for Outlook

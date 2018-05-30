@@ -31,6 +31,9 @@ COPY ./emailserver/configs/rspamd.sh /
 RUN ./rspamd.sh
 COPY ./emailserver/configs/Rspamd /etc/rspamd/
 RUN mkdir /var/lib/rspamd/dkim/
+RUN rspamadm dkim_keygen -b 1024 -s 2018 -d $DOMAIN -k /var/lib/rspamd/dkim/2018.key > /var/lib/rspamd/dkim/2018.txt
+RUN chown -R _rspamd:_rspamd /var/lib/rspamd/dkim
+RUN chmod 440 /var/lib/rspamd/dkim/*
 RUN cp -R /etc/rspamd/local.d/dkim_signing.conf /etc/rspamd/local.d/arc.conf
 COPY ./emailserver/configs/sieve /sieve
 

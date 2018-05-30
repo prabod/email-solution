@@ -56,20 +56,26 @@ files=$(shopt -s nullglob dotglob; echo $KEY_PATH)
 echo $KEY_PATH
 echo "Checking for existing certificates"
 
-if (( ${#files} )); then
-    echo "Found existing keys!!"
-else
-    echo "No Certicates Found!!"
-    echo "Generating SSL Certificates with LetsEncrypt"
-    letsencrypt certonly --standalone -d $HOSTNAME --noninteractive --agree-tos --email $EMAIL
-    if (( ${#files} )); then
-      echo "Certicate generation Successfull"
-    else
-      echo "Certicate generation failed."
-      exit 1
-    fi
-fi
 
+if ["$DEBUG" = true]; then
+  mkdir $KEY_PATH
+  openssl req -nodes -x509 -newkey rsa:4096 -keyout ${KEY_PATH}.privkey.pem -out ${KEY_PATH}.fullchain.pem -days 365 -subj "/C=US/ST=Oregon/L=Portland/O=Company Name/OU=Org/CN=www.example.com"
+  echo "IN DEBUG MODE!!!! - GENERATED SELF SIGNED SSL KEY"
+else
+  if (( ${#files} )); then
+      echo "Found existing keys!!"
+  else
+      echo "No Certicates Found!!"
+      echo "Generating SSL Certificates with LetsEncrypt"
+      letsencrypt certonly --standalone -d $HOSTNAME --noninteractive --agree-tos --email $EMAIL
+      if (( ${#files} )); then
+        echo "Certicate generation Successfull"
+      else
+        echo "Certicate generation failed."
+        exit 1
+      fi
+  fi
+fi
  cp -R /etc/letsencrypt/ /cert
  sed -i.bak -e "s;%DFQN%;"${HOSTNAME}";g" "/etc/postfix/main.cf"
  sed -i.bak -e "s;%DOMAIN%;"${DOMAIN}";g" "/etc/postfix/main.cf"
@@ -96,6 +102,9 @@ fi
  cp -R /sieve/* /var/mail/sieve/global/
  sievec /var/mail/sieve/global/spam-global.sieve
  sievec /var/mail/sieve/global/report-ham.sieve
+ rspamadm dkim_keygen -b 1024 -s 2018 -d ${DOMAIN} -k /var/lib/rspamd/dkim/2018.key > /var/lib/rspamd/dkim/2018.txt
+ chown -R _rspamd:_rspamd /var/lib/rspamd/dkim
+ chmod 440 /var/lib/rspamd/dkim/*
  sudo chown -R vmail: /var/mail/sieve/
  cat /var/lib/rspamd/dkim/2018.txt
  touch /var/log/mail.log

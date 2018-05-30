@@ -2,7 +2,7 @@ From debian:stretch-slim
 MAINTAINER Prabod Rathnayaka <prabod@rathnayaka.me>
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get -y purge exim4*
-RUN apt-get -y install letsencrypt
+RUN apt-get -y install letsencrypt openssl
 RUN apt-get -y install postfix postfix-mysql postfix-pcre libsasl2-modules
 RUN apt-get install -y rsyslog fetchmail libdbi-perl libdbd-pg-perl libdbd-mysql-perl liblockfile-simple-perl
 RUN apt-get -y install dovecot-core dovecot-imapd dovecot-pop3d dovecot-lmtpd dovecot-mysql dovecot-sieve dnsutils
@@ -31,9 +31,6 @@ COPY ./emailserver/configs/rspamd.sh /
 RUN ./rspamd.sh
 COPY ./emailserver/configs/Rspamd /etc/rspamd/
 RUN mkdir /var/lib/rspamd/dkim/
-RUN rspamadm dkim_keygen -b 1024 -s 2018 -d $DOMAIN -k /var/lib/rspamd/dkim/2018.key > /var/lib/rspamd/dkim/2018.txt
-RUN chown -R _rspamd:_rspamd /var/lib/rspamd/dkim
-RUN chmod 440 /var/lib/rspamd/dkim/*
 RUN cp -R /etc/rspamd/local.d/dkim_signing.conf /etc/rspamd/local.d/arc.conf
 COPY ./emailserver/configs/sieve /sieve
 
